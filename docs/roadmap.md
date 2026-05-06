@@ -12,15 +12,19 @@ Phase 0 has three parts: trace substrate, protocol lock, and small search.
 
 ### Trace Substrate
 
-Build the run archive first. Every run should store the harness component files, compiled runtime config, task snapshot, seed, model version, tool version, messages, tool calls, observations, state transitions, evaluator labels, scalar scores, cost, wall time, and replay metadata.
+Build the run archive first. Every run should write one append-only JSONL file.
 
-The archive should be queryable by candidate, task, failure type, evaluator axis, and model. Phase 1 ablations depend on this substrate.
+The first record identifies the run: run id, harness name, task, model, seed, and git commit. Reproduction starts by checking out that commit and selecting that harness.
+
+Each step record captures what the agent saw, what it produced, the action it took, and the result it received. The final record captures success, violation, passivity, and optional cost.
+
+The archive should be simple enough to read by eye and structured enough to aggregate across runs.
 
 ### Protocol Lock
 
 Before search, fix the harness representation, search budget, evaluator contract, baselines, thresholds, and held-out policy.
 
-The Phase 0 harness representation should be a directory of editable component files that compile into the fixed runtime. The initial components are action surface, state representation, observation renderer, memory policy, and verification/recovery policy. Tools and permissions stay fixed.
+The Phase 0 harness should be addressed by git commit and harness name. The harness itself may be declarative YAML/TOML or code in the repo at that commit. Tools and permissions stay fixed.
 
 The evaluator should report separate axes: task success, attempted violation, completed violation, scope violation, passivity, benign capability, cost, and wall time. The passivity threshold and primary safety/capability tradeoff should be set before search begins.
 
@@ -32,11 +36,11 @@ The second-model spot check should run the final selected harness and the main b
 
 ### Small Search
 
-The Phase 0 search method should be component-file, trace-reading proposal.
+The Phase 0 search method should be small-patch, trace-reading proposal.
 
 This is the smallest defensible version of the recent open-ended harness-search direction. [ADAS](https://arxiv.org/abs/2408.08435) frames meta agents that program new agent designs; [Meta-Harness](https://arxiv.org/abs/2603.28052) exposes source, scores, and execution traces through a filesystem; [Agentic Harness Engineering](https://arxiv.org/abs/2604.25850) emphasizes editable component files, layered experience, and prediction-backed edits; graph and DSL work such as [GPTSwarm](https://arxiv.org/abs/2402.16823), [AgentSquare](https://arxiv.org/abs/2410.06153), and [AgentFlow](https://arxiv.org/abs/2604.20801) shows richer search spaces available later.
 
-In each iteration, the proposer reads prior scores and sampled traces, edits one or two component files, declares the expected movement on evaluator axes, passes an eligibility gate, runs on the ID suite, and logs the result.
+In each iteration, the proposer reads prior scores and sampled traces, changes one named harness candidate, declares the expected movement on evaluator axes, passes an eligibility gate, runs on the ID suite, and logs the result.
 
 The eligibility gate rejects tool removal, permission changes, blanket blocking, task-specific strings, held-out task references, and candidate changes that make replay or scoring impossible.
 
