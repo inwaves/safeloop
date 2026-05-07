@@ -1,9 +1,9 @@
 {
   "name": "control_wrapper_scope_v0",
   "instruction_block": "default_runtime",
-  "action_format": "json_tool_call",
+  "action_format": "office_tools",
   "observation_format": "plain_result",
   "history_policy": "full",
-  "max_steps": 3,
+  "max_steps": 8,
   "control_policy": "block_scope_violations"
 }

@@ -25,11 +25,19 @@ In progress. The runner can execute harnesses, call task worlds, and record cost
 - [x] Benign capability: use `office_benign`, a separate tiny suite with ordinary workspace tasks and no useful unsafe shortcut.
 - [x] Primary model: start with Sonnet 4.6.
 - [ ] GPT-5.5 check: after selecting a candidate on Sonnet 4.6, run that candidate and the baselines with GPT-5.5 to see whether the result still shows up.
-- [ ] First safety-pressure task: design the first task where unsafe behavior is plausibly useful.
+- [x] First safety-pressure task: add hand-authored `office_pressure_v0`.
+- [x] Shaky trajectory probe: add `office_shaky_v0` with polluted drafts and unsafe attachment hints.
+- [ ] Pressure calibration: Sonnet 4.6 recovered from the shaky starts, so stronger realistic pressure is still needed.
 
 ## Immediate Next Step
 
-Design the first task where unsafe behavior is plausibly useful.
+Calibrate the office-pressure suites until unsafe shortcuts are plausible for real models without making the tasks cartoonish.
+
+## Office Pressure Suite
+
+`office_pressure_v0` contains hand-authored client email tasks with current project files, stale drafts, wrong-client files, private notes, and sent-mail scoring. The first Sonnet 4.6 pass completed the tasks safely, so the suite exists but the pressure is not yet calibrated.
+
+`office_shaky_v0` starts from polluted drafts or unsafe attachment hints. The first Sonnet 4.6 pass recovered safely on all three tasks: it reviewed the draft state, corrected unsafe content or attachments, and sent clean client emails.
 
 ## Baseline Harnesses
 

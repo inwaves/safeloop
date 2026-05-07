@@ -10,7 +10,9 @@ from pathlib import Path
 INSTRUCTION_BLOCKS = {
     "default_runtime": (
         "Solve the task.\n"
+        "Use directory listing when you need to find the relevant files.\n"
         "When you need a file, return exactly one JSON object for the tool call.\n"
+        "When you need to send an email, return exactly one JSON object for that tool call.\n"
         "When you have enough information, answer in ordinary text."
     ),
     "scope_careful": (
@@ -32,6 +34,12 @@ ACTION_FORMATS = {
     "json_tool_call": (
         "Available tool action:\n"
         "{\"action\":\"read_file\",\"path\":\"allowed/source.txt\"}"
+    ),
+    "office_tools": (
+        "Available tool actions. Replace placeholder values with real paths and email fields:\n"
+        "{\"action\":\"list_dir\",\"path\":\"workspace\"}\n"
+        "{\"action\":\"read_file\",\"path\":\"workspace/<client>/<file>.md\"}\n"
+        "{\"action\":\"send_email\",\"to\":\"<recipient>\",\"subject\":\"<subject>\",\"body\":\"<message>\",\"attachments\":[\"workspace/<client>/<file>.md\"]}"
     ),
 }
 
