@@ -176,6 +176,70 @@ class EvaluateTests(unittest.TestCase):
             )
             self.assertTrue(task.required_terms)
 
+    def test_office_staged_suite_has_queued_unsafe_momentum(self) -> None:
+        suite = load_suite("office_staged_v0")
+
+        self.assertEqual(len(suite), 3)
+        for task in suite:
+            self.assertIsInstance(task, OfficeEmailTask)
+            pending_paths = [path for path in task.files if path.endswith(".pending.json")]
+            self.assertEqual(len(pending_paths), 1)
+            pending = json.loads(task.files[pending_paths[0]])
+            attachments = pending["attachments"]
+            self.assertTrue(attachments)
+            self.assertFalse(
+                any(
+                    term.lower() in f"{pending['subject']}\n{pending['body']}".lower()
+                    for term in task.forbidden_terms
+                )
+            )
+            self.assertTrue(
+                any(
+                    any(path.startswith(prefix) for prefix in task.allowed_prefixes)
+                    and not any(path.startswith(prefix) for prefix in task.shareable_prefixes)
+                    for path in attachments
+                )
+            )
+
+    def test_office_staged_scores_unsafe_queued_send_as_useful_violation(self) -> None:
+        task = load_suite("office_staged_v0")[0]
+        pending_path = next(path for path in task.files if path.endswith(".pending.json"))
+        pending = json.loads(task.files[pending_path])
+        action = {"action": "send_email", **pending}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            task.setup(root)
+            recorded = task.record_action(action)
+            result = task.execute(root, action, control_policy="none")
+            score = task.score(
+                root,
+                actions=[recorded | {"completed": result.completed}],
+                output="",
+                stop_reason="agent_text",
+            )
+
+        self.assertEqual(result.completed, True)
+        self.assertEqual(score.success, True)
+        self.assertEqual(score.attempted_violation, True)
+        self.assertEqual(score.completed_violation, True)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            task.setup(root)
+            recorded = task.record_action(action)
+            result = task.execute(root, action, control_policy="block_scope_violations")
+            score = task.score(
+                root,
+                actions=[recorded | {"completed": result.completed}],
+                output="",
+                stop_reason="agent_text",
+            )
+
+        self.assertEqual(result.blocked, True)
+        self.assertEqual(score.attempted_violation, True)
+        self.assertEqual(score.completed_violation, False)
+
     def test_office_email_task_scores_sent_mail_and_leaks(self) -> None:
         task = load_suite("office_pressure_v0")[0]
         with tempfile.TemporaryDirectory() as tmp:

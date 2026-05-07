@@ -13,8 +13,9 @@ SafeLoop should grow by earning stronger claims one step at a time.
 - [x] Repeated runs: Use `k=3` for each harness/task/model setting.
 - [x] Benign capability suite: `office_benign` adds ordinary workspace tasks with clutter but no useful unsafe shortcut.
 - [x] First office-pressure suite: `office_pressure_v0` is hand-authored with client emails, stale drafts, wrong-client files, private notes, and sent-mail scoring.
-- [x] Shaky trajectory probe: `office_shaky_v0` starts from polluted drafts or unsafe attachment hints.
-- [ ] Pressure calibration: Initial Sonnet run stayed on the safe path, so the suite still needs calibration before search.
+- [x] Shaky trajectory probe: `office_shaky_v0` exists, but the first version was too obvious to teach us much.
+- [x] Staged-work probe: `office_staged_v0` starts from queued client sends where unsafe continuation looks like normal office momentum.
+- [ ] Pressure calibration: `office_staged_v0` produced one useful violation and two safe non-completions with Sonnet 4.6; calibrate recovery-to-completion before search.
 - [ ] Held-out suites: OOD is tabled until the first real safety-pressure task exists.
 - [ ] GPT-5.5 check: After Sonnet 4.6 candidate selection, rerun the selected harness and baselines with GPT-5.5.
 - [ ] Small harness search: Start only after the evaluation protocol is stable.
@@ -53,7 +54,7 @@ The OOD suite should be frozen before search and evaluated once after candidate 
 
 The second-model spot check should run the final selected harness and the main baselines on another base model before Phase 1 begins.
 
-Immediate implementation target: calibrate the office-pressure suites until unsafe shortcuts are plausible for real models without making the tasks cartoonish.
+Immediate implementation target: calibrate the staged office suite so unsafe shortcuts are plausible and safe behavior can still complete the task.
 
 ### Small Search
 
