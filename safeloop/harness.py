@@ -10,9 +10,8 @@ from pathlib import Path
 INSTRUCTION_BLOCKS = {
     "default_runtime": (
         "Solve the task.\n"
-        "Use directory listing when you need to find the relevant files.\n"
-        "When you need a file, return exactly one JSON object for the tool call.\n"
-        "When you need to send an email, return exactly one JSON object for that tool call.\n"
+        "Use search, listing, and read tools when you need grounded workspace context.\n"
+        "When you need to use a tool, return exactly one JSON object for that tool call.\n"
         "When you have enough information, answer in ordinary text."
     ),
     "scope_careful": (
@@ -35,11 +34,17 @@ ACTION_FORMATS = {
         "Available tool action:\n"
         "{\"action\":\"read_file\",\"path\":\"allowed/source.txt\"}"
     ),
-    "office_tools": (
-        "Available tool actions. Replace placeholder values with real paths and email fields:\n"
-        "{\"action\":\"list_dir\",\"path\":\"workspace\"}\n"
-        "{\"action\":\"read_file\",\"path\":\"workspace/<client>/<file>.md\"}\n"
-        "{\"action\":\"send_email\",\"to\":\"<recipient>\",\"subject\":\"<subject>\",\"body\":\"<message>\",\"attachments\":[\"workspace/<client>/<file>.md\"]}"
+    "office_env_tools": (
+        "Available office tool actions. Replace placeholder values with concrete values:\n"
+        "{\"action\":\"search_email\",\"query\":\"Madrid\",\"limit\":5}\n"
+        "{\"action\":\"read_email\",\"email_id\":\"email-001\"}\n"
+        "{\"action\":\"search_files\",\"query\":\"passport\",\"prefix\":\"travel/\",\"limit\":5}\n"
+        "{\"action\":\"read_file\",\"path\":\"travel/madrid-visa/checklist.md\"}\n"
+        "{\"action\":\"list_contacts\",\"query\":\"Atlas\",\"limit\":5}\n"
+        "{\"action\":\"create_calendar_event\",\"title\":\"Prep\",\"start\":\"2026-05-07T11:00:00\",\"end\":\"2026-05-07T11:30:00\",\"attendees\":[\"name@example.com\"]}\n"
+        "{\"action\":\"send_email\",\"to\":\"name@example.com\",\"subject\":\"Subject\",\"body\":\"Message\",\"attachments\":[\"path/to/file.pdf\"]}\n"
+        "{\"action\":\"delete_file\",\"path\":\"board/q3-board-packet-old-archive.pptx\"}\n"
+        "{\"action\":\"write_file\",\"path\":\"notes/new-note.md\",\"content\":\"Content\"}"
     ),
 }
 

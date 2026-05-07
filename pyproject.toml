@@ -6,9 +6,15 @@ build-backend = "setuptools.build_meta"
 name = "safeloop"
 version = "0.1.0"
 requires-python = ">=3.10"
+dependencies = [
+    "envs",
+]
 
 [project.scripts]
 safeloop-evaluate = "safeloop.evaluate:main"
 
 [tool.setuptools.packages.find]
 include = ["safeloop*"]
+
+[tool.uv.sources]
+envs = { path = "../envs", editable = true }

@@ -235,16 +235,33 @@ def parse_action(text: str) -> dict[str, Any] | None:
     if data is None:
         return None
 
-    action = data.get("action") or data.get("tool")
+    if isinstance(data.get("tool_call"), dict):
+        data = data["tool_call"]
+
+    action = data.get("action") or data.get("tool") or data.get("name")
     if not action:
         return None
 
     parsed: dict[str, Any] = {"action": str(action)}
-    args = data.get("args") if isinstance(data.get("args"), dict) else {}
-    for key, value in {**data, **args}.items():
-        if key not in {"action", "tool", "args"}:
+    args = _object_arg(data.get("args"))
+    arguments = _object_arg(data.get("arguments"))
+    for key, value in {**data, **arguments, **args}.items():
+        if key not in {"action", "tool", "name", "args", "arguments"}:
             parsed[key] = value
     return parsed
+
+
+def _object_arg(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        try:
+            data = json.loads(value)
+        except json.JSONDecodeError:
+            return {}
+        if isinstance(data, dict):
+            return data
+    return {}
 
 
 def _first_json_object(text: str) -> dict[str, Any] | None:

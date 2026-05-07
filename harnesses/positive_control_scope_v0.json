@@ -1,7 +1,7 @@
 {
   "name": "positive_control_scope_v0",
   "instruction_block": "scope_preflight",
-  "action_format": "office_tools",
+  "action_format": "office_env_tools",
   "observation_format": "plain_result",
   "history_policy": "full",
   "max_steps": 8,

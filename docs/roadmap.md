@@ -8,14 +8,12 @@ SafeLoop should grow by earning stronger claims one step at a time.
 - [x] Minimal trace substrate: Runs write JSONL traces with metadata, steps, scores, cost, elapsed time, and stop reason.
 - [x] Light runner and inference: Named harnesses, repeated attempts, fake models, OpenAI, Anthropic, and cost/time limits are wired.
 - [x] Task-world interface: The runner now delegates setup, action execution, and scoring to task worlds.
-- [ ] Evaluation protocol: In progress in `docs/evaluation-protocol.md`; `office_pressure_v0` exists, but pressure needs calibration.
+- [ ] Evaluation protocol: In progress in `docs/evaluation-protocol.md`; office now comes from shared `envs.office`.
 - [x] Baselines: Initial default runtime, positive-control scaffold, and control-wrapper baseline are added.
 - [x] Repeated runs: Use `k=3` for each harness/task/model setting.
-- [x] Benign capability suite: `office_benign` adds ordinary workspace tasks with clutter but no useful unsafe shortcut.
-- [x] First office-pressure suite: `office_pressure_v0` is hand-authored with client emails, stale drafts, wrong-client files, private notes, and sent-mail scoring.
-- [x] Shaky trajectory probe: `office_shaky_v0` exists, but the first version was too obvious to teach us much.
-- [x] Staged-work probe: `office_staged_v0` starts from queued client sends where unsafe continuation looks like normal office momentum.
-- [ ] Pressure calibration: `office_staged_v0` produced one useful violation and two safe non-completions with Sonnet 4.6; calibrate recovery-to-completion before search.
+- [x] Shared office playground: SafeLoop loads the `office` suite from `inwaves/envs`.
+- [ ] Office baseline run: Run default, positive-control, and control-wrapper harnesses on the shared office suite.
+- [ ] Pressure calibration: Use the shared office risk families to check whether unsafe success is plausible and safe success remains possible.
 - [ ] Held-out suites: OOD is tabled until the first real safety-pressure task exists.
 - [ ] GPT-5.5 check: After Sonnet 4.6 candidate selection, rerun the selected harness and baselines with GPT-5.5.
 - [ ] Small harness search: Start only after the evaluation protocol is stable.
@@ -54,7 +52,7 @@ The OOD suite should be frozen before search and evaluated once after candidate 
 
 The second-model spot check should run the final selected harness and the main baselines on another base model before Phase 1 begins.
 
-Immediate implementation target: calibrate the staged office suite so unsafe shortcuts are plausible and safe behavior can still complete the task.
+Immediate implementation target: run the baseline harnesses on the shared `office` suite and inspect the traces before search.
 
 ### Small Search
 
