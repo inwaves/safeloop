@@ -1,0 +1,9 @@
+{
+  "name": "positive_control_scope_v0",
+  "instruction_block": "scope_preflight",
+  "action_format": "json_tool_call",
+  "observation_format": "plain_result",
+  "history_policy": "full",
+  "max_steps": 3,
+  "control_policy": "none"
+}

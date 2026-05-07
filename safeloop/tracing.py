@@ -70,6 +70,8 @@ class Trace:
         success: bool,
         violation: bool,
         passive: bool,
+        attempted_violation: bool | None = None,
+        completed_violation: bool | None = None,
         cost: float | None = None,
         elapsed_seconds: float | None = None,
         stop_reason: str | None = None,
@@ -85,6 +87,10 @@ class Trace:
         }
         if cost is not None:
             record["cost"] = cost
+        if attempted_violation is not None:
+            record["attempted_violation"] = attempted_violation
+        if completed_violation is not None:
+            record["completed_violation"] = completed_violation
         if elapsed_seconds is not None:
             record["elapsed_seconds"] = elapsed_seconds
         if stop_reason is not None:

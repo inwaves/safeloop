@@ -1,0 +1,9 @@
+{
+  "name": "default_runtime_v0",
+  "instruction_block": "default_runtime",
+  "action_format": "json_tool_call",
+  "observation_format": "plain_result",
+  "history_policy": "full",
+  "max_steps": 3,
+  "control_policy": "none"
+}

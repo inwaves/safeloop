@@ -13,7 +13,7 @@ from typing import Any
 
 from safeloop.harness import Harness
 from safeloop.models import ModelClient
-from safeloop.tasks import ScopeTask
+from safeloop.tasks import TaskWorld
 from safeloop.tracing import current_commit, start_trace
 
 
@@ -28,6 +28,8 @@ class Attempt:
     success: bool
     violation: bool
     passive: bool
+    attempted_violation: bool
+    completed_violation: bool
     cost: float
     elapsed_seconds: float
     stop_reason: str
@@ -35,7 +37,7 @@ class Attempt:
 
 def run_suite(
     *,
-    suite: list[ScopeTask],
+    suite: list[TaskWorld],
     suite_name: str,
     harness: Harness,
     model_name: str,
@@ -84,7 +86,7 @@ def run_suite(
 
 def run_attempt(
     *,
-    task: ScopeTask,
+    task: TaskWorld,
     suite_name: str,
     harness: Harness,
     model_name: str,
@@ -97,7 +99,7 @@ def run_attempt(
 ) -> Attempt:
     _validate_limits(max_seconds=max_seconds, max_cost=max_cost)
     attempt_id = f"{task.id}-seed-{seed}-{uuid.uuid4().hex[:8]}"
-    actions: list[dict[str, str]] = []
+    actions: list[dict[str, Any]] = []
     last_output = ""
     total_cost = 0.0
     start = time.monotonic()
@@ -143,30 +145,39 @@ def run_attempt(
                     max_cost=max_cost,
                 )
 
-                if action and action["action"] == "read_file":
-                    path = str(action["path"])
-                    tool_action = {"tool": "read_file", "path": path}
+                if action:
+                    tool_action = task.record_action(action)
                     actions.append(tool_action)
                     if limit_reason:
                         stop_reason = limit_reason
+                        tool_action["completed"] = False
                         trace.step(
                             input=render_messages(visible_messages),
                             output=output,
                             action=tool_action,
                         )
                         break
-                    try:
-                        result = task.read_file(root, path)
-                    except Exception as exc:
-                        result = f"ERROR: {exc}"
+                    result = task.execute(
+                        root,
+                        action,
+                        control_policy=harness.control_policy,
+                    )
+                    tool_action["completed"] = result.completed
+                    if result.blocked:
+                        tool_action["blocked"] = True
                     trace.step(
                         input=render_messages(visible_messages),
                         output=output,
                         action=tool_action,
-                        result=result,
+                        result=result.observation,
                     )
                     messages.append({"role": "assistant", "content": output})
-                    messages.append({"role": "user", "content": harness.render_observation(result)})
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": harness.render_observation(result.observation),
+                        }
+                    )
                     continue
 
                 trace.step(
@@ -177,14 +188,24 @@ def run_attempt(
                 stop_reason = limit_reason or "agent_text"
                 break
 
-            success = task.success(last_output)
-            violation = task.violation(actions)
+            score = task.score(
+                root,
+                actions=actions,
+                output=last_output,
+                stop_reason=stop_reason,
+            )
+            success = score.success
+            violation = score.violation
+            attempted_violation = score.attempted_violation
+            completed_violation = score.completed_violation
             elapsed_seconds = time.monotonic() - start
-            passive = stop_reason == "agent_text" and not actions and not success
+            passive = score.passive
             trace.score(
                 success=success,
                 violation=violation,
                 passive=passive,
+                attempted_violation=attempted_violation,
+                completed_violation=completed_violation,
                 cost=total_cost,
                 elapsed_seconds=elapsed_seconds,
                 stop_reason=stop_reason,
@@ -200,6 +221,8 @@ def run_attempt(
         success=success,
         violation=violation,
         passive=passive,
+        attempted_violation=attempted_violation,
+        completed_violation=completed_violation,
         cost=total_cost,
         elapsed_seconds=elapsed_seconds,
         stop_reason=stop_reason,
@@ -208,24 +231,31 @@ def run_attempt(
 
 def parse_action(text: str) -> dict[str, Any] | None:
     stripped = _strip_code_fence(text.strip())
-    try:
-        data = json.loads(stripped)
-    except json.JSONDecodeError:
-        match = re.search(r"\{.*\}", stripped, re.S)
-        if not match:
-            return None
-        try:
-            data = json.loads(match.group(0))
-        except json.JSONDecodeError:
-            return None
+    data = _first_json_object(stripped)
+    if data is None:
+        return None
 
     action = data.get("action") or data.get("tool")
-    if action == "read_file":
-        args = data.get("args") if isinstance(data.get("args"), dict) else {}
-        path = data.get("path") or args.get("path")
-        if not path:
-            return None
-        return {"action": "read_file", "path": str(path)}
+    if not action:
+        return None
+
+    parsed: dict[str, Any] = {"action": str(action)}
+    args = data.get("args") if isinstance(data.get("args"), dict) else {}
+    for key, value in {**data, **args}.items():
+        if key not in {"action", "tool", "args"}:
+            parsed[key] = value
+    return parsed
+
+
+def _first_json_object(text: str) -> dict[str, Any] | None:
+    decoder = json.JSONDecoder()
+    for match in re.finditer(r"\{", text):
+        try:
+            data, _ = decoder.raw_decode(text[match.start():])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(data, dict):
+            return data
     return None
 
 
@@ -237,6 +267,8 @@ def summarize_attempts(attempts: list[Attempt]) -> dict[str, Any]:
         "attempts": n,
         "success_rate": sum(a.success for a in attempts) / n,
         "violation_rate": sum(a.violation for a in attempts) / n,
+        "attempted_violation_rate": sum(a.attempted_violation for a in attempts) / n,
+        "completed_violation_rate": sum(a.completed_violation for a in attempts) / n,
         "passive_rate": sum(a.passive for a in attempts) / n,
         "total_cost": sum(a.cost for a in attempts),
         "total_elapsed_seconds": sum(a.elapsed_seconds for a in attempts),
