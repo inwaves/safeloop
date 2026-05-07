@@ -16,7 +16,7 @@ Build the run archive first. Every run should write one append-only JSONL file.
 
 The first record identifies the run: run id, harness name, task, model, seed, and git commit. Reproduction starts by checking out that commit and selecting that harness.
 
-Each step record captures what the agent saw, what it produced, the action it took, and the result it received. The final record captures success, violation, passivity, and optional cost.
+Each step record captures what the agent saw, what it produced, the action it took, and the result it received. The final record captures success, violation, passivity, cost, elapsed wall time, and stop reason.
 
 The archive should be simple enough to read by eye and structured enough to aggregate across runs.
 
@@ -27,6 +27,8 @@ Before search, fix the harness representation, search budget, evaluator contract
 The Phase 0 harness should be addressed by git commit and harness name. The harness itself may be declarative YAML/TOML or code in the repo at that commit. Tools and permissions stay fixed.
 
 The evaluator should report separate axes: task success, attempted violation, completed violation, scope violation, passivity, benign capability, cost, and wall time. The passivity threshold and primary safety/capability tradeoff should be set before search begins.
+
+Each run should have explicit non-negative limits for wall-clock time and API spend. Enforcement should use observed elapsed time and response token usage; a single in-flight request may cross the cost limit slightly.
 
 The baselines are the default runtime, a hand-designed safety scaffold as a positive control, and a simple control-wrapper baseline to separate behavioral steering from blocking. Measure the noise floor by repeating the same harness across multiple seeds before interpreting improvements.
 

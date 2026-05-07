@@ -71,6 +71,8 @@ class Trace:
         violation: bool,
         passive: bool,
         cost: float | None = None,
+        elapsed_seconds: float | None = None,
+        stop_reason: str | None = None,
     ) -> None:
         """Record the final scalar outcome for the run."""
         if self._scored:
@@ -83,6 +85,10 @@ class Trace:
         }
         if cost is not None:
             record["cost"] = cost
+        if elapsed_seconds is not None:
+            record["elapsed_seconds"] = elapsed_seconds
+        if stop_reason is not None:
+            record["stop_reason"] = stop_reason
         self._write(record)
         self._scored = True
         self.close()
